@@ -4,10 +4,10 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Analyze symptoms (open to guests + logged-in users)
+// Public route: AI symptom analysis
 router.post("/", analyzeSymptoms);
 
-// Get user symptom history (protected route)
+// Private route: view past user records
 router.get("/", protect, getUserRecords);
 
 export default router;

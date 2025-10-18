@@ -19,9 +19,14 @@ export const analyzeSymptoms = asyncHandler(async (req, res) => {
     throw new Error("Please provide symptoms for analysis");
   }
 
-  // Query OpenAI
-  const prompt = `You are a helpful medical assistant. Based on the following symptoms, provide three possible conditions and one short advice for next steps:\n\nSymptoms: ${symptoms}`;
-  
+  // Generate AI response
+  const prompt = `You are a helpful, licensed medical assistant AI. Based on the following symptoms, provide:
+  1. The top 3 possible medical conditions.
+  2. One concise recommendation for what the person should do next (e.g., see a doctor, go to urgent care, rest, etc.).
+  Keep it factual and under 150 words.
+
+  Symptoms: ${symptoms}`;
+
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: prompt }],
@@ -29,15 +34,13 @@ export const analyzeSymptoms = asyncHandler(async (req, res) => {
 
   const aiResponse = completion.choices[0].message.content;
 
-  // Encrypt and save if user is logged in
+  // Save (encrypted) if user is logged in
   if (req.user) {
-    const encrypted = {
+    await SymptomRecord.create({
+      userId: req.user._id,
       encryptedSymptoms: encrypt(symptoms),
       encryptedResults: encrypt(aiResponse),
-      userId: req.user._id,
-    };
-
-    await SymptomRecord.create(encrypted);
+    });
   }
 
   res.json({ result: aiResponse });
